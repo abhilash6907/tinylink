@@ -1,4 +1,4 @@
-import pool from "./db.js";
+import pool from "../src/config/database.js";
 
 const test = async () => {
   const {rows} = await pool.query('SELECT code, lastclicked, pg_typeof(lastclicked) as type FROM links LIMIT 1');

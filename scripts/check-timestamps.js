@@ -1,4 +1,4 @@
-import pool from "./db.js";
+import pool from "../src/config/database.js";
 
 const checkTimestamps = async () => {
   try {

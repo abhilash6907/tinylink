@@ -21,7 +21,7 @@ async function run() {
     console.error('DNS lookup failed:', err);
   }
 
-  const pool = new Pool({
+  import pool from "../src/config/database.js";
     connectionString: url,
     ssl: { rejectUnauthorized: false },
     connectionTimeoutMillis: 10000,
