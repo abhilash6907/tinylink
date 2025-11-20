@@ -1,0 +1,64 @@
+<section class="space-y-6">
+  <% if (!link) { %>
+    <div class="rounded-2xl border border-rose-200 bg-rose-50/70 p-6 text-center">
+      <h1 class="mb-2 text-2xl font-semibold text-rose-700">Link not found</h1>
+      <p class="text-sm text-rose-600">The requested short code does not exist. Double-check the link or create a new one.</p>
+      <a class="mt-4 inline-flex items-center rounded-full bg-rose-600 px-6 py-2 text-sm font-semibold text-white shadow hover:bg-rose-500" href="/">
+        Back to dashboard
+      </a>
+    </div>
+  <% } else { %>
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <p class="text-sm uppercase tracking-wide text-slate-500">Short code</p>
+        <h1 class="text-4xl font-bold"><%= link.code %></h1>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a
+          class="inline-flex items-center rounded-full bg-sky-600 px-6 py-2 text-sm font-semibold text-white shadow hover:bg-sky-500"
+          href="<%= baseUrl %>/<%= link.code %>"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Open short URL
+        </a>
+        <a
+          class="inline-flex items-center rounded-full border border-slate-200 px-6 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-slate-300"
+          href="<%= link.longURL %>"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Visit destination
+        </a>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+      <div class="space-y-2">
+        <p class="text-sm font-semibold text-slate-500">Destination URL</p>
+        <a class="break-words text-lg text-sky-600 underline-offset-4 hover:underline" href="<%= link.longURL %>" target="_blank" rel="noreferrer">
+          <%= link.longURL %>
+        </a>
+      </div>
+
+      <div class="mt-6 grid gap-4 md:grid-cols-3">
+        <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Total Clicks</p>
+          <p class="text-3xl font-bold text-slate-900"><%= link.clicks %></p>
+        </div>
+        <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Created At</p>
+          <p class="text-base font-semibold text-slate-900">
+            <%= link.createdAt ? new Date(link.createdAt).toLocaleString() : "—" %>
+          </p>
+        </div>
+        <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Last Clicked</p>
+          <p class="text-base font-semibold text-slate-900">
+            <%= link.lastClicked ? new Date(link.lastClicked).toLocaleString() : "—" %>
+          </p>
+        </div>
+      </div>
+    </div>
+  <% } %>
+</section>

@@ -1,0 +1,271 @@
+<section class="grid gap-6 lg:grid-cols-[350px_minmax(0,1fr)]">
+  <div class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+    <h2 class="mb-4 text-xl font-semibold">Create a short link</h2>
+    <p class="mb-4 text-sm text-slate-600">
+      Provide a destination URL and an optional custom code (6-8 alphanumeric characters).
+    </p>
+    <div id="form-alert" class="mb-4 hidden rounded-lg border px-3 py-2 text-sm"></div>
+    <form id="link-form" class="space-y-4" autocomplete="off">
+      <div>
+        <label class="mb-1 block text-sm font-medium" for="longURL">Destination URL</label>
+        <input
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-sky-500 focus:outline-none"
+          type="url"
+          name="longURL"
+          id="longURL"
+          placeholder="https://example.com/article"
+          required
+        />
+      </div>
+      <div>
+        <label class="mb-1 block text-sm font-medium" for="code">Custom Code (optional)</label>
+        <input
+          class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm uppercase tracking-wide focus:border-sky-500 focus:outline-none"
+          type="text"
+          name="code"
+          id="code"
+          minlength="6"
+          maxlength="8"
+          pattern="[A-Za-z0-9]{6,8}"
+          placeholder="e.g. TINY42"
+        />
+      </div>
+      <button
+        class="inline-flex w-full items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500"
+        type="submit"
+      >
+        Shorten URL
+      </button>
+    </form>
+  </div>
+
+  <div class="rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm">
+    <div class="mb-4 flex items-center justify-between">
+      <div>
+        <h2 class="text-xl font-semibold">Your links</h2>
+        <p class="text-sm text-slate-600">Newest first, auto-refreshed on create/delete.</p>
+      </div>
+      <button
+        id="refresh-btn"
+        class="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-slate-600 transition hover:border-slate-300"
+        type="button"
+      >
+        Refresh
+      </button>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+          <tr>
+            <th class="px-3 py-2">Code</th>
+            <th class="px-3 py-2">Long URL</th>
+            <th class="px-3 py-2 text-right">Clicks</th>
+            <th class="px-3 py-2">Last Clicked</th>
+            <th class="px-3 py-2 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100" id="links-table-body">
+          <% if (links && links.length) { %>
+            <% links.forEach((link) => { %>
+              <tr>
+                <td class="px-3 py-3 font-mono text-xs"><%= link.code %></td>
+                <td class="px-3 py-3" style="max-width: 400px;">
+                  <a
+                    class="block truncate text-sky-600 hover:underline"
+                    href="<%= link.longURL %>"
+                    target="_blank"
+                    rel="noreferrer"
+                    title="<%= link.longURL %>"
+                  >
+                    <%= link.longURL %>
+                  </a>
+                </td>
+                <td class="px-3 py-3 text-right font-semibold"><%= link.clicks %></td>
+                <td class="px-3 py-3 text-sm text-slate-500">
+                  <%= link.lastClicked ? new Date(link.lastClicked).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'short', timeStyle: 'medium' }) : "—" %>
+                </td>
+                <td class="space-y-1 px-3 py-3 text-right text-xs">
+                  <button
+                    type="button"
+                    class="copy-btn inline-flex items-center rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-600 transition hover:border-slate-300"
+                    data-url="<%= baseUrl %>/<%= link.code %>"
+                  >
+                    Copy
+                  </button>
+                  <button
+                    type="button"
+                    class="delete-btn inline-flex items-center rounded-full border border-rose-200 px-3 py-1 font-semibold text-rose-600 transition hover:bg-rose-50"
+                    data-code="<%= link.code %>"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td class="px-3 py-6 text-center text-sm text-slate-500" colspan="5">
+                No links yet. Create your first short link!
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+  const BASE_URL = (document.body && document.body.dataset.baseUrl) || window.location.origin;
+  const form = document.getElementById("link-form");
+  const alertBox = document.getElementById("form-alert");
+  const refreshBtn = document.getElementById("refresh-btn");
+  const tableBody = document.getElementById("links-table-body");
+
+  const showAlert = (message, success = true) => {
+    if (!alertBox) return;
+    alertBox.textContent = message;
+    alertBox.classList.remove(
+      "hidden",
+      "border-emerald-200",
+      "text-emerald-700",
+      "bg-emerald-50",
+      "border-rose-200",
+      "text-rose-700",
+      "bg-rose-50"
+    );
+    alertBox.classList.add(
+      success ? "border-emerald-200" : "border-rose-200",
+      success ? "text-emerald-700" : "text-rose-700",
+      success ? "bg-emerald-50" : "bg-rose-50"
+    );
+  };
+
+  const resetAlert = () => {
+    if (!alertBox) return;
+    alertBox.classList.add("hidden");
+    alertBox.textContent = "";
+  };
+
+  const refreshLinks = async () => {
+    if (!tableBody) return;
+    try {
+      const response = await fetch("/api/links");
+      if (!response.ok) {
+        showAlert("Unable to load links.", false);
+        return;
+      }
+      const { data } = await response.json();
+      const rows = (data || [])
+      .map(
+        (link) => `
+          <tr>
+            <td class="px-3 py-3 font-mono text-xs">${link.code}</td>
+            <td class="px-3 py-3" style="max-width: 400px;">
+              <a class="block truncate text-sky-600 hover:underline" href="${link.longURL}" target="_blank" rel="noreferrer" title="${link.longURL}">
+                ${link.longURL}
+              </a>
+            </td>
+            <td class="px-3 py-3 text-right font-semibold">${link.clicks}</td>
+            <td class="px-3 py-3 text-sm text-slate-500">${link.lastClicked ? new Date(link.lastClicked).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', hour12: true }) : "—"}</td>
+            <td class="space-y-1 px-3 py-3 text-right text-xs">
+              <button type="button" class="copy-btn inline-flex items-center rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-600 transition hover:border-slate-300" data-url="${BASE_URL}/${link.code}">
+                Copy
+              </button>
+              <button type="button" class="delete-btn inline-flex items-center rounded-full border border-rose-200 px-3 py-1 font-semibold text-rose-600 transition hover:bg-rose-50" data-code="${link.code}">
+                Delete
+              </button>
+            </td>
+          </tr>`
+      )
+      .join("");
+      tableBody.innerHTML =
+        rows ||
+        `<tr><td class="px-3 py-6 text-center text-sm text-slate-500" colspan="5">No links yet. Create your first short link!</td></tr>`;
+      attachRowHandlers();
+    } catch (error) {
+      console.error("Failed to refresh links", error);
+      showAlert("Unable to load links.", false);
+    }
+  };
+
+  const attachRowHandlers = () => {
+    document.querySelectorAll(".copy-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const value = btn.getAttribute("data-url");
+        if (!value) return;
+        try {
+          if (!navigator.clipboard) {
+            throw new Error("Clipboard API unavailable");
+          }
+          await navigator.clipboard.writeText(value);
+          btn.textContent = "Copied";
+          setTimeout(() => {
+            btn.textContent = "Copy";
+          }, 1200);
+        } catch (error) {
+          console.error("Clipboard copy failed", error);
+          showAlert("Clipboard copy not supported.", false);
+        }
+      });
+    });
+
+    document.querySelectorAll(".delete-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const code = btn.getAttribute("data-code");
+        if (!code) return;
+        const confirmed = window.confirm(`Delete short link ${code}?`);
+        if (!confirmed) return;
+        try {
+          const response = await fetch(`/api/links/${code}`, { method: "DELETE" });
+          const payload = await response.json().catch(() => ({}));
+          if (response.ok) {
+            showAlert("Link deleted.", true);
+            refreshLinks();
+          } else {
+            showAlert(payload.message || "Unable to delete link.", false);
+          }
+        } catch (error) {
+          console.error("Failed to delete link", error);
+          showAlert("Unable to delete link.", false);
+        }
+      });
+    });
+  };
+
+  if (form) {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      resetAlert();
+      const formData = new FormData(form);
+      const payload = Object.fromEntries(formData.entries());
+      if (!payload.longURL) {
+        showAlert("Destination URL is required.", false);
+        return;
+      }
+      try {
+        const response = await fetch("/api/links", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+        if (response.ok) {
+          showAlert("Link created successfully.", true);
+          form.reset();
+          refreshLinks();
+        } else {
+          showAlert(result.message || "Unable to save link.", false);
+        }
+      } catch (error) {
+        console.error("Failed to create link", error);
+        showAlert("Network error. Please try again.", false);
+      }
+    });
+  }
+
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", refreshLinks);
+  }
+  attachRowHandlers();
+</script>
