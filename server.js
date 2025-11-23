@@ -24,7 +24,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "src/public")));
 
 app.use((req, res, next) => {
-  res.locals.baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+  const BASE_URL = process.env.BASE_URL || `${req.protocol}://${req.get("host")}`;
+  res.locals.baseUrl = BASE_URL;
   next();
 });
 
@@ -33,15 +34,15 @@ app.use("/api", apiRouter);
 
 app.use(errorHandler);
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`TinyLink server listening on port ${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`TinyLink server running on port ${PORT}`);
   
   // Test database connection
   pool.query("SELECT NOW()")
-    .then(() => console.log("Database connected successfully"))
+    .then(() => console.log("✓ Database connected successfully"))
     .catch((err) => {
-      console.error("Database connection failed details:");
+      console.error("✗ Database connection failed:");
       console.error(err);
     });
 });
